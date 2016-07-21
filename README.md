@@ -1,43 +1,37 @@
 CLAVIN Rest
 ===========
 
-## Quick Start 
+## Quick Start
 
-### Download the CLAVIN Rest Server 
+### Download StanfordNLP
 
-    curl -L https://github.com/Berico-Technologies/CLAVIN-rest/releases/download/0.2.0/clavin-rest-0.2.0.jar -o clavin-rest.jar
+    http://stanfordnlp.github.io/CoreNLP/
 
-### Download Geonames 
-  
+### Package creation
+
+    git clone git@github.com:mightynimble/clavin-rest.git
+    cd clavin-rest
+    mvn package
+
+### Download Geonames
+
     curl -O http://download.geonames.org/export/dump/allCountries.zip
 
-### Unzip Geonames 
+### Unzip Geonames
 
     unzip allCountries.zip
 
-### Download CLAVIN yaml configuration file 
+### Create a CLAVIN gazetteer
 
-    curl -O https://raw.githubusercontent.com/Berico-Technologies/CLAVIN-rest/master/clavin-rest.yml 
+    java -Xmx4096m -jar ./target/clavin-rest-0.3.0-SNAPSHOT.jar index clavin-rest.yml
 
-### Create a CLAVIN gazetteer 
-    
-    java -Xmx4096m -jar clavin-rest.jar index clavin-rest.yml
+### Run the CLAVIN rest server
 
-### Run the CLAVIN rest server 
+    java -Xmx2048m -jar ./target/clavin-rest-0.3.0-SNAPSHOT.jar server clavin-rest.yml
 
-    java -Xmx2048m -jar clavin-rest.jar server clavin-rest.yml 
+### Geotag a string
 
-### Geotag an article  
+    curl -s --data "Norway is a small town in Maine" --header "Content-Type: text/plain" http://localhost:9090/api/v0/geotag
 
-    curl -O https://raw.githubusercontent.com/Berico-Technologies/CLAVIN/master/src/test/resources/sample-docs/Somalia-doc.txt
-
-    curl -s --data @Somalia-doc.txt --header "Content-Type: text/plain" http://localhost:9090/api/v0/geotag
-
-
-## Package creation 
-
-    git clone https://github.com/Berico-Technologies/CLAVIN-rest
-    cd CLAVIN-rest
-    mvn package 
-
-
+### Temporal extraction
+    curl -s --data "Dump trash on Thursdays" --header "Content-Type: text/plain" http://localhost:9090/api/v0/temporal
