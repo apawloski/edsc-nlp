@@ -39,7 +39,7 @@ CLAVIN Rest
 
 ### Run the CLAVIN rest server
 
-    java -Xmx2048m -jar ./target/clavin-rest-0.3.0-SNAPSHOT.jar server clavin-rest.yml
+    java -Xmx2048m -jar clavin-rest-0.3.0-SNAPSHOT.jar server clavin-rest.yml
 
 ### Geotag a string
 
