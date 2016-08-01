@@ -5,6 +5,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
@@ -21,10 +23,24 @@ import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.*;
 import edu.stanford.nlp.time.*;
 import edu.stanford.nlp.util.CoreMap;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.json.JSONConfiguration;
+
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.WebResource.Builder;
+import java.net.URLEncoder;
+
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Response.Status.Family;
+import javax.ws.rs.core.UriBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/v0")
 @Produces(MediaType.APPLICATION_JSON)
 public class ClavinRestResource {
+    private static final Logger logger = LoggerFactory.getLogger(ClavinRestResource.class);
 
     private final GeoParser parser;
     private final AnnotationPipeline pipeline;
@@ -49,7 +65,43 @@ public class ClavinRestResource {
         try {
             List<ResolvedLocation> resolvedLocations = parser.parse(text);
             result = new ResolvedLocations(resolvedLocations);
-
+            
+            String geoName = "";
+            String delim = "";
+            String country = "";
+            for (ResolvedLocation rLoc : resolvedLocations) {
+                logger.info("------- getMatchedName(): " + rLoc.getMatchedName());
+                logger.info("------- getGeoname().toString(): " + rLoc.getGeoname().toString());
+                logger.info("------- getConfidence(): " + rLoc.getConfidence());
+                logger.info("------- getLocation().getText(): " + rLoc.getLocation().getText());
+                geoName += delim + rLoc.getMatchedName();
+                delim = ",";
+                if (country.isEmpty() && !rLoc.getGeoname().getPrimaryCountryName().isEmpty()) {
+                    country = rLoc.getGeoname().getPrimaryCountryName();
+                    logger.info("-------- countrY: " + country);
+                }
+            }
+            if (!country.isEmpty()) {
+                geoName += "," + country;
+            }
+            
+            if (resolvedLocations.size() > 0) {
+                String uri = "http://api.geonames.org/search?username=edsc&type=json&maxRows=1&isNameRequired=true&style=full&q=" + URLEncoder.encode(geoName, "UTF-8");
+                logger.info("Seding request to geonames.org: " + uri);
+                ClientConfig clientConfig = new DefaultClientConfig();
+                clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+                
+                Client client = Client.create(clientConfig);
+                WebResource resource = client.resource(uri);
+                ClientResponse response = resource.accept("application/json").get(ClientResponse.class);;
+                
+                if (response.getStatus() == Status.OK.getStatusCode()) {
+                    return Response.status(200).entity(response.getEntity(String.class)).build();
+                }
+                else {
+                    logger.error("Request '" + uri + "' returned status code: " + response.getStatus());
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(500).entity(e).build();
