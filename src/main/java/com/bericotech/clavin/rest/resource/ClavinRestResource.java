@@ -28,18 +28,20 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.WebResource.Builder;
+import gov.nasa.earthdata.edsc.EdscResponse;
+import gov.nasa.earthdata.edsc.EdscUtils;
+import gov.nasa.earthdata.edsc.spatial.EdscSpatial;
+import gov.nasa.earthdata.edsc.temporal.EdscTemporal;
 import java.net.URLEncoder;
 
 import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.Response.Status.Family;
-import javax.ws.rs.core.UriBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("/v0")
 @Produces(MediaType.APPLICATION_JSON)
 public class ClavinRestResource {
+
     private static final Logger logger = LoggerFactory.getLogger(ClavinRestResource.class);
 
     private final GeoParser parser;
@@ -61,11 +63,11 @@ public class ClavinRestResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response extractAndResolveSimpleLocationsFromText(String text) {
 
-        ResolvedLocations result = null;
+        ResolvedLocations result;
         try {
             List<ResolvedLocation> resolvedLocations = parser.parse(text);
             result = new ResolvedLocations(resolvedLocations);
-            
+
             String geoName = "";
             String delim = "";
             String country = "";
@@ -84,26 +86,24 @@ public class ClavinRestResource {
             if (!country.isEmpty()) {
                 geoName += "," + country;
             }
-            
+
             if (resolvedLocations.size() > 0) {
                 String uri = "http://api.geonames.org/search?username=edsc&type=json&maxRows=1&isNameRequired=true&style=full&q=" + URLEncoder.encode(geoName, "UTF-8");
                 logger.info("Seding request to geonames.org: " + uri);
                 ClientConfig clientConfig = new DefaultClientConfig();
                 clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-                
+
                 Client client = Client.create(clientConfig);
                 WebResource resource = client.resource(uri);
-                ClientResponse response = resource.accept("application/json").get(ClientResponse.class);;
-                
+                ClientResponse response = resource.accept("application/json").get(ClientResponse.class);
+
                 if (response.getStatus() == Status.OK.getStatusCode()) {
                     return Response.status(200).entity(response.getEntity(String.class)).build();
-                }
-                else {
+                } else {
                     logger.error("Request '" + uri + "' returned status code: " + response.getStatus());
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
             return Response.status(500).entity(e).build();
         }
 
@@ -116,12 +116,11 @@ public class ClavinRestResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response extractAndResolveSimpleShortLocationsFromText(String text) {
 
-        ResolvedLocationsMinimum result = null;
+        ResolvedLocationsMinimum result;
         try {
             List<ResolvedLocation> resolvedLocations = parser.parse(text);
             result = new ResolvedLocationsMinimum(resolvedLocations);
         } catch (Exception e) {
-            e.printStackTrace();
             return Response.status(500).entity(e).build();
         }
 
@@ -151,10 +150,10 @@ public class ClavinRestResource {
             out += "toISOString: " + temporal.toISOString() + "\n";
             out += "getDuration: " + temporal.getDuration() + "\n";
             out += "getGranularity: " + temporal.getGranularity() + "\n";
-            out += "getPeriod: " + temporal.getPeriod()+ "\n";
+            out += "getPeriod: " + temporal.getPeriod() + "\n";
             out += "getStandardTemporalType: " + temporal.getStandardTemporalType() + "\n";
             out += "getTime: " + temporal.getTime() + "\n";
-            out += "getTimexType: " + temporal.getTimexType()+ "\n";
+            out += "getTimexType: " + temporal.getTimexType() + "\n";
             out += "getUncertaintyGranularity: " + temporal.getUncertaintyGranularity() + "\n";
             out += "getMod: " + temporal.getMod() + "\n";
             out += "toString" + temporal.toString() + "\n\n";
@@ -162,4 +161,38 @@ public class ClavinRestResource {
         // System.out.println("--");
         return Response.status(200).entity(out).build();
     }
+
+    @POST
+    @Path("/context_parsing")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response contextParsing(String text) {
+        ResolvedLocations result = null;
+        /*
+        * spatial extraction
+        */
+        EdscSpatial edscSpatial;
+        try {
+            edscSpatial = EdscUtils.spatialParsing(text, parser.parse(text));
+        } catch (Exception e) {
+            return Response.status(500).entity(e).build();
+        }
+
+        /*
+        * temporal extraction
+        */
+        if (edscSpatial != null) {
+            text = edscSpatial.getTextAfterExtraction();
+        }
+        EdscTemporal edscTemporal = EdscUtils.temporalParsing(text, pipeline);
+
+        EdscResponse edscResponse = new EdscResponse();
+        edscResponse.setEdscSpatial(edscSpatial);
+        edscResponse.setEdscTemporal(edscTemporal);
+        edscResponse.setKeyword(edscTemporal.getTextAfterExtraction());
+
+        return Response.status(200).entity(edscResponse).build();
+    }
+
+    
 }
