@@ -50,6 +50,10 @@ public class ClavinRestService extends Service<ClavinRestConfiguration> {
         // GeoParser parser = GeoParserFactory.getDefault("./IndexDirectory");
 
         Properties props = new Properties();
+        props.setProperty("sutime.includeRange", "true");
+//        props.setProperty("sutime.includeNested", "true");
+        props.setProperty("sutime.markTimeRanges", "true");
+        
         AnnotationPipeline pipeline = new AnnotationPipeline();
         pipeline.addAnnotator(new TokenizerAnnotator(false));
         pipeline.addAnnotator(new WordsToSentencesAnnotator(false));

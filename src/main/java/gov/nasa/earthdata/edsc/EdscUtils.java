@@ -23,6 +23,7 @@ import gov.nasa.earthdata.edsc.spatial.EdscBoundingBox;
 import gov.nasa.earthdata.edsc.spatial.EdscPoint;
 import gov.nasa.earthdata.edsc.spatial.EdscSpatial;
 import gov.nasa.earthdata.edsc.temporal.EdscTemporal;
+import gov.nasa.earthdata.edsc.temporal.Timex2;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -30,6 +31,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import javax.ws.rs.core.Response;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -46,9 +48,7 @@ public class EdscUtils {
     private static final Logger logger = LoggerFactory.getLogger(EdscUtils.class);
 
     private static String removeTrailingPreposition(String text) {
-        logger.info("+_+_+_+_+_ text: " + text);       
         for (Prepositions prep : Prepositions.values()) {
-            logger.info("----- prep: " + prep.value());
             if (text.toLowerCase().endsWith(" " + prep.value())) {
                 return removeTrailingPreposition(text.substring(0, text.length() - (" " + prep.value()).length()));
             }
@@ -66,19 +66,13 @@ public class EdscUtils {
         String country = "";
         boolean isCountry = false;
         for (ResolvedLocation rLoc : resolvedLocations) {
-            logger.info("------- getMatchedName(): " + rLoc.getMatchedName());
-            logger.info("------- getGeoname().toString(): " + rLoc.getGeoname().toString());
-            logger.info("------- getConfidence(): " + rLoc.getConfidence());
-            logger.info("------- getLocation().getText(): " + rLoc.getLocation().getText());
             geoName += delim + rLoc.getMatchedName();
             delim = ",";
 
             // Remove matched spatial (and prepositions) from text
             if (text.toLowerCase().contains(rLoc.getMatchedName().toLowerCase())) {
-                logger.info("+++++ trailing preps detected: " + text);
                 String[] splits = text.toLowerCase().split("[^A-Za-z0-9]*" + rLoc.getMatchedName().toLowerCase() + "[^A-Za-z0-9]*", 2);
                 text = removeTrailingPreposition(splits[0]) + " " + splits[1];
-                logger.info("+++++ trailing preps removed: " + text);
             }
 
             // Add country to the extracted geoname string
@@ -87,14 +81,13 @@ public class EdscUtils {
             }
             if (!isCountry && country.isEmpty() && !rLoc.getGeoname().getPrimaryCountryName().isEmpty()) {
                 country = rLoc.getGeoname().getPrimaryCountryName();
-                logger.info("-------- country: " + country);
             }
         }
         if (!country.isEmpty()) {
             geoName += "," + country;
         }
         logger.info("---- geoName: " + geoName);
-        
+
         if (resolvedLocations.size() > 0) {
             String uri = "http://api.geonames.org/search?username=edsc&type=json&maxRows=1&isNameRequired=true&style=full&q=" + URLEncoder.encode(geoName, "UTF-8");
             logger.info("Seding request to geonames.org: " + uri);
@@ -129,11 +122,11 @@ public class EdscUtils {
                 return null;
             }
         }
-        
-        logger.info ("No resolved locations found from text: " + text);
+
+        logger.info("No resolved locations found from text: " + text);
         return null;
     }
-    
+
     public static EdscTemporal temporalParsing(String text, AnnotationPipeline pipeline) {
         Annotation annotation = new Annotation(text);
         annotation.set(CoreAnnotations.DocDateAnnotation.class,
@@ -141,7 +134,7 @@ public class EdscUtils {
 
         pipeline.annotate(annotation);
         List<CoreMap> timexAnnsAll = annotation.get(TimeAnnotations.TimexAnnotations.class);
-        
+
         String out = "";
         EdscTemporal edscTemporal = new EdscTemporal();
         for (CoreMap cm : timexAnnsAll) {
@@ -156,28 +149,24 @@ public class EdscUtils {
             edscTemporal.setTemporal(temporal.toString());
             edscTemporal.setTimex(temporal.getTimexValue());
             edscTemporal.setTextAfterExtraction(text.replaceAll("[^A-Za-z0-9]*$", ""));
-            edscTemporal.setQuery(timexToQuery(temporal.getTimexValue()));
-            
+//            edscTemporal.setQuery(timexToQuery(temporal.getTimexValue()));
             logger.info("0----- temporal.getTimexValue(): " + temporal.getTimexValue());
+            logger.info("0------- temporal.getDuration(): " + temporal.getDuration());
+            logger.info("0------- temporal.getPeriod(): " + temporal.getPeriod());
             logger.info("0----- timex.text(): " + timex.text());
             logger.info("0----- timex.toString(): " + timex.toString());
             logger.info("0----- timex.value(): " + timex.value());
-            logger.info("0----- timex.getRange().first(): " + timex.getRange().first().getTime());
-            logger.info("0----- timex.getRange().second(): " + timex.getRange().second().getTime());
-            
-            Timex timex2 = new Timex("DATE", "2015SU");
-            logger.info("0----- timex2.text(): " + timex2.text());
-            logger.info("0----- timex2.toString(): " + timex2.toString());
-            logger.info("0----- timex2.value(): " + timex2.value());
-            logger.info("0----- timex2.getRange().first(): " + timex2.getRange().first().getTime());
-            logger.info("0----- timex2.getRange().second(): " + timex2.getRange().second().getTime());
-        }
-        
-        return edscTemporal;
-    }
+            if (timex.timexType() != "SET") {
+                logger.info("0----- timex.getRange().first(): " + timex.getRange().first().getTime());
+                logger.info("0----- timex.getRange().second(): " + timex.getRange().second().getTime());
+            }
 
-    private static String timexToQuery(String timexValue) {
-        
-        return null;
+//            Timex2 timex2 = new Timex2(cm.get(TimeAnnotations.TimexAnnotation.class).timexType(), cm.get(TimeAnnotations.TimexAnnotation.class).value());
+//            logger.info("0----- timex2.toString(): " + timex2.toString());
+//            logger.info("0----- timex2.getRange().first(): " + timex2.getRange().first().getTime());
+//            logger.info("0----- timex2.getRange().second(): " + timex2.getRange().second().getTime());
+        }
+
+        return edscTemporal;
     }
 }

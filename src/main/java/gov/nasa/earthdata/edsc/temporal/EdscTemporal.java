@@ -51,18 +51,4 @@ public class EdscTemporal {
     public void setTextAfterExtraction(String textAfterExtraction) {
         this.textAfterExtraction = textAfterExtraction;
     }
-
-    /**
-     * @return the query
-     */
-    public String getQuery() {
-        return query;
-    }
-
-    /**
-     * @param query the query to set
-     */
-    public void setQuery(String query) {
-        this.query = query;
-    }
 }
