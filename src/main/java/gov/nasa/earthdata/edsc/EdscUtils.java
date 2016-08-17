@@ -9,6 +9,7 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
+import edu.stanford.nlp.io.StringOutputStream;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
@@ -23,21 +24,32 @@ import gov.nasa.earthdata.edsc.spatial.EdscBoundingBox;
 import gov.nasa.earthdata.edsc.spatial.EdscPoint;
 import gov.nasa.earthdata.edsc.spatial.EdscSpatial;
 import gov.nasa.earthdata.edsc.temporal.EdscTemporal;
-import gov.nasa.earthdata.edsc.temporal.Timex2;
+import gov.nasa.earthdata.edsc.temporal.Timex3;
+import gov.nasa.earthdata.edsc.temporal.Range;
+import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 import javax.ws.rs.core.Response;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 /**
  *
@@ -73,6 +85,7 @@ public class EdscUtils {
             if (text.toLowerCase().contains(rLoc.getMatchedName().toLowerCase())) {
                 String[] splits = text.toLowerCase().split("[^A-Za-z0-9]*" + rLoc.getMatchedName().toLowerCase() + "[^A-Za-z0-9]*", 2);
                 text = removeTrailingPreposition(splits[0]) + " " + splits[1];
+                text = text.trim();
             }
 
             // Add country to the extracted geoname string
@@ -112,7 +125,7 @@ public class EdscUtils {
                             spatial.setBbox(new EdscBoundingBox(swPoint, nePoint));
                             spatial.setGeonames(geoName);
                             spatial.setTextAfterExtraction(text);
-                            spatial.setQuery("sb=" + swPoint.getLongitude() + "%2C" + swPoint.getLatitude() + "%2C" + nePoint.getLongitude() + "%2C" + nePoint.getLatitude());
+                            spatial.setQuery("bounding_box:" + swPoint.getLongitude() + "," + swPoint.getLatitude() + ":" + nePoint.getLongitude() + "," + nePoint.getLatitude());
                             return spatial;
                         }
                     }
@@ -137,36 +150,227 @@ public class EdscUtils {
 
         String out = "";
         EdscTemporal edscTemporal = new EdscTemporal();
+        Range range = new Range();
+        Timex3 oldTimex3 = null;
+        Timex3 newTimex3;
         for (CoreMap cm : timexAnnsAll) {
             if (text.contains(cm.toString())) {
-                logger.info("+++++ before removing temporal: " + text);
                 String[] splits = text.split("[^A-Za-z0-9]*" + cm + "[^A-Za-z0-9]*", 2);
                 text = removeTrailingPreposition(splits[0]) + " " + splits[1];
-                logger.info("+++++ after removing temporal: " + text);
             }
             SUTime.Temporal temporal = cm.get(TimeExpression.Annotation.class).getTemporal();
             Timex timex = cm.get(TimeAnnotations.TimexAnnotation.class);
-            edscTemporal.setTemporal(temporal.toString());
-            edscTemporal.setTimex(temporal.getTimexValue());
-            edscTemporal.setTextAfterExtraction(text.replaceAll("[^A-Za-z0-9]*$", ""));
-//            edscTemporal.setQuery(timexToQuery(temporal.getTimexValue()));
-            logger.info("0----- temporal.getTimexValue(): " + temporal.getTimexValue());
-            logger.info("0------- temporal.getDuration(): " + temporal.getDuration());
-            logger.info("0------- temporal.getPeriod(): " + temporal.getPeriod());
-            logger.info("0----- timex.text(): " + timex.text());
-            logger.info("0----- timex.toString(): " + timex.toString());
-            logger.info("0----- timex.value(): " + timex.value());
-            if (timex.timexType() != "SET") {
-                logger.info("0----- timex.getRange().first(): " + timex.getRange().first().getTime());
-                logger.info("0----- timex.getRange().second(): " + timex.getRange().second().getTime());
-            }
+            newTimex3 = Timex3.fromXml(timex.toString());
+            logger.info("-----------------------------------------------------------------");
+            logger.info("  temporal.getTimexValue(): " + temporal.getTimexValue());
+            logger.info("  temporal.getDuration(): " + temporal.getDuration());
+            logger.info("  temporal.getPeriod(): " + temporal.getPeriod());
+            logger.info("  timex.text(): " + timex.text());
+            logger.info("  timex.toString(): " + timex.toString());
+            logger.info("  timex.value(): " + timex.value());
+            logger.info("-----------------------------------------------------------------");
 
-//            Timex2 timex2 = new Timex2(cm.get(TimeAnnotations.TimexAnnotation.class).timexType(), cm.get(TimeAnnotations.TimexAnnotation.class).value());
-//            logger.info("0----- timex2.toString(): " + timex2.toString());
-//            logger.info("0----- timex2.getRange().first(): " + timex2.getRange().first().getTime());
-//            logger.info("0----- timex2.getRange().second(): " + timex2.getRange().second().getTime());
+            range = mergeRanges(newTimex3, oldTimex3, range);
+            oldTimex3 = newTimex3;
+            System.out.println("-----$$$#$@$@$@$ range: " + range);
+            edscTemporal.setTemporal(edscTemporal.getTemporal() + ", " + temporal.toString());
+            edscTemporal.setTimex(edscTemporal.getTimex() + ", " + temporal.getTimexValue());
+            edscTemporal.setTextAfterExtraction(text.replaceAll("[^A-Za-z0-9]*$", ""));
+        }
+        try {
+            if (timexAnnsAll.size() > 0) {
+                edscTemporal.setQuery(getEdscQuery(range));
+                edscTemporal.setStart(range.getBegin() + "Z");
+                edscTemporal.setEnd(range.getEnd() + "Z");
+                edscTemporal.setRecurring(range.getPeriodicity() != -1);
+            }
+            else {
+                return null;
+            }
+        } catch (ParseException e) {
+            logger.error(e.getLocalizedMessage(), e);
+            edscTemporal.setQuery(null);
         }
 
         return edscTemporal;
+    }
+
+    private static String getEdscQuery(Range range) throws ParseException {
+        if (range == null || range.getBegin() == null && range.getEnd() == null) {
+            return null;
+        }
+        // only apply annual recurring
+        int beginDayOfYear = -1;
+        int endDayOfYear = -1;
+        if (range.getPeriodicity() != -1) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            Calendar beginCal = Calendar.getInstance();
+            beginCal.setTime(formatter.parse(range.getBegin()));
+            Calendar endCal = Calendar.getInstance();
+            endCal.setTime(formatter.parse(range.getEnd()));
+            beginDayOfYear = beginCal.get(Calendar.DAY_OF_YEAR);
+            endDayOfYear = endCal.get(Calendar.DAY_OF_YEAR);
+            return range.getBegin() + "Z" + "," + range.getEnd() + "Z," + beginDayOfYear + "," + endDayOfYear;
+        }
+        return range.getBegin() + "Z" + "," + range.getEnd() + "Z";
+    }
+
+    private static Range mergeRanges(Timex3 timex3, Timex3 oldTimex3, Range oldRange) {
+        if (timex3.getType().equals("SET")) {
+            // CMR can only deal with annual recurring temporals
+            if (Pattern.matches("P\\d+Y", timex3.getVal())) {
+                oldRange.setPeriodicity(Integer.parseInt(timex3.getVal().substring(1, timex3.getVal().indexOf("Y"))));
+            }
+            return oldRange;
+        } else {
+            Range range = timex3.getRange();
+
+            Calendar begin = toCalendar(range.getBegin(), oldRange.getBegin(), true);
+            Calendar end = toCalendar(range.getEnd(), oldRange.getEnd(), false);
+
+            if (begin != null && end != null) {
+                SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                return new Range(formatter.format(begin.getTime()),
+                        formatter.format(end.getTime()), "", oldRange.getPeriodicity());
+            }
+            return null;
+        }
+    }
+
+    private static Calendar toCalendar(String rangeDateTime, String oldRangeDateTime, boolean isBegin) {
+        rangeDateTime = rangeDateTime.toUpperCase(); // xxxx-xx-03 to XXXX-XX-03
+        oldRangeDateTime = oldRangeDateTime.toUpperCase();
+
+        String regex = "(?:XXXX|\\d{4,})-(?:XX|\\d{1,2})(-(?:XX|\\d{1,2})(-W(?:XX|\\d{1,2})-\\d)?(T\\d{1,2}:\\d{1,2}((:\\d{1,2})?(\\.\\d{1,3})?)?)?)?";
+        if (rangeDateTime != null && !rangeDateTime.isEmpty() && Pattern.matches(regex, rangeDateTime)) {
+            String[] datetime = rangeDateTime.split("T");
+            String[] date = datetime[0].split("-");
+            String[] time = datetime.length > 1 ? datetime[1].split(":") : null;
+
+            int year, month, dayOfMonth, hour, minute, second;
+            if (oldRangeDateTime != null && !oldRangeDateTime.isEmpty() && Pattern.matches(regex, oldRangeDateTime)) {
+                String[] oldDatetime = oldRangeDateTime.split("T");
+                String[] oldDate = oldDatetime[0].split("-");
+                String[] oldTime = oldDatetime.length > 1 ? oldDatetime[1].split(":") : null;
+
+                logger.info("------- " + rangeDateTime + ", " + oldRangeDateTime);
+                // merge year
+                if (date[0].equals("XXXX")) {
+                    if (oldDate[0].equals("XXXX")) {
+                        year = isBegin
+                                ? Calendar.getInstance().getActualMinimum(Calendar.YEAR)
+                                : Calendar.getInstance().getActualMaximum(Calendar.YEAR);
+                    } else {
+                        year = Integer.parseInt(oldDate[0]);
+                    }
+                } else if (oldDate[0].equals("XXXX")) {
+                    year = Integer.parseInt(date[0]);
+                } else {
+                    int tmp1 = Integer.parseInt(date[0]);
+                    int tmp2 = Integer.parseInt(oldDate[0]);
+                    year = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
+                }
+
+                // merge month
+                if (date[1].equals("XX")) {
+                    month = oldDate[1].equals("XX") ? 1 : Integer.parseInt(oldDate[1]);
+                } else if (oldDate[1].equals("XX")) {
+                    month = Integer.parseInt(date[1]);
+                } else {
+                    int tmp1 = Integer.parseInt(date[1]);
+                    int tmp2 = Integer.parseInt(oldDate[1]);
+                    month = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
+                }
+
+                // merge day
+                if (date.length < 3 && oldDate.length < 3) {
+                    dayOfMonth = 1;
+                } else if (date.length < 3 && oldDate.length >= 3) {
+                    dayOfMonth = Integer.parseInt(oldDate[2]);
+                } else if (date.length >= 3 && oldDate.length < 3) {
+                    dayOfMonth = Integer.parseInt(date[2]);
+                } else if (date[2].equals("XX")) {
+                    dayOfMonth = oldDate[2].equals("XX") ? 1 : Integer.parseInt(oldDate[2]);
+                } else if (oldDate[2].equals("XX")) {
+                    dayOfMonth = Integer.parseInt(date[2]);
+                } else {
+                    int tmp1 = Integer.parseInt(date[2]);
+                    int tmp2 = Integer.parseInt(oldDate[2]);
+                    dayOfMonth = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
+                }
+
+                // merge time
+                if (time != null) {
+                    if (oldTime == null) {
+                        hour = Integer.parseInt(time[0]);
+                        minute = Integer.parseInt(time[1]);
+                        second = Integer.parseInt(time[2]);
+                    } else {
+                        int tmp1 = Integer.parseInt(time[0]);
+                        int tmp2 = Integer.parseInt(oldTime[0]);
+                        hour = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
+
+                        tmp1 = Integer.parseInt(time[1]);
+                        tmp2 = Integer.parseInt(oldTime[1]);
+                        minute = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
+
+                        if (time.length < 3) {
+                            if (oldTime.length < 3) {
+                                second = 0;
+                            } else {
+                                second = Integer.parseInt(oldTime[2]);
+                            }
+                        } else if (oldTime.length < 3) {
+                            second = Integer.parseInt(time[2]);
+                        } else {
+                            tmp1 = Integer.parseInt(time[2]);
+                            tmp2 = Integer.parseInt(oldTime[2]);
+                            second = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
+                        }
+                    }
+                } else if (oldTime != null) {
+                    hour = Integer.parseInt(oldTime[0]);
+                    minute = Integer.parseInt(oldTime[1]);
+                    second = Integer.parseInt(oldTime[2]);
+                } else {
+                    hour = minute = second = 0;
+                }
+
+                return makeCalendar(year, month, dayOfMonth, hour, minute, second);
+            }
+
+        }
+        logger.error(String.format("Unknown value \"%s\"", rangeDateTime));
+        return null;
+    }
+
+    private static Calendar makeCalendar(int year, int month, int day, int hour, int minute, int sec) {
+        Calendar date = Calendar.getInstance();
+        date.clear();
+        date.set(year, month - 1, day, hour, minute, sec);
+        return date;
+    }
+
+    private static Calendar makeCalendar(int year, int month, int day) {
+        Calendar date = Calendar.getInstance();
+        date.clear();
+        date.set(year, month - 1, day, 0, 0, 0);
+        return date;
+    }
+
+    private static Calendar makeCalendar(int year, int dayOfYear) {
+        Calendar date = Calendar.getInstance();
+        date.clear();
+        date.set(Calendar.YEAR, year);
+        date.set(Calendar.DAY_OF_YEAR, dayOfYear);
+        return date;
+    }
+
+    private static Calendar copyCalendar(Calendar c) {
+        Calendar date = Calendar.getInstance();
+        date.clear();
+        date.set(c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.HOUR_OF_DAY), c
+                .get(Calendar.MINUTE), c.get(Calendar.SECOND));
+        return date;
     }
 }

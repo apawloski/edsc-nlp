@@ -33,6 +33,7 @@ import gov.nasa.earthdata.edsc.EdscUtils;
 import gov.nasa.earthdata.edsc.spatial.EdscSpatial;
 import gov.nasa.earthdata.edsc.temporal.EdscTemporal;
 import java.net.URLEncoder;
+import javax.ws.rs.QueryParam;
 
 import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
@@ -162,11 +163,10 @@ public class ClavinRestResource {
         return Response.status(200).entity(out).build();
     }
 
-    @POST
+    @GET
     @Path("/context_parsing")
-    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response contextParsing(String text) {
+    public Response contextParsing(@QueryParam("text") String text) {
         ResolvedLocations result = null;
         /*
         * spatial extraction
@@ -189,8 +189,13 @@ public class ClavinRestResource {
         EdscResponse edscResponse = new EdscResponse();
         edscResponse.setEdscSpatial(edscSpatial);
         edscResponse.setEdscTemporal(edscTemporal);
-        edscResponse.setKeyword(edscTemporal.getTextAfterExtraction());
-
+        if (edscTemporal != null) {
+            edscResponse.setKeyword(edscTemporal.getTextAfterExtraction());
+        }
+        else {
+            edscResponse.setKeyword(text);
+        }
+        
         return Response.status(200).entity(edscResponse).build();
     }
 

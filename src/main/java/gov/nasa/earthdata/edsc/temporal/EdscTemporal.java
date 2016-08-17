@@ -9,6 +9,9 @@ public class EdscTemporal {
     private String temporal;
     private String timex;
     private String query;
+    private String start;
+    private String end;
+    private boolean recurring;
 
     /**
      * @return the temporal
@@ -50,5 +53,61 @@ public class EdscTemporal {
      */
     public void setTextAfterExtraction(String textAfterExtraction) {
         this.textAfterExtraction = textAfterExtraction;
+    }
+
+    /**
+     * @return the query
+     */
+    public String getQuery() {
+        return query;
+    }
+
+    /**
+     * @param query the query to set
+     */
+    public void setQuery(String query) {
+        this.query = query;
+    }
+
+    /**
+     * @return the start
+     */
+    public String getStart() {
+        return start;
+    }
+
+    /**
+     * @param start the start to set
+     */
+    public void setStart(String start) {
+        this.start = start;
+    }
+
+    /**
+     * @return the end
+     */
+    public String getEnd() {
+        return end;
+    }
+
+    /**
+     * @param end the end to set
+     */
+    public void setEnd(String end) {
+        this.end = end;
+    }
+
+    /**
+     * @return the recurring
+     */
+    public boolean isRecurring() {
+        return recurring;
+    }
+
+    /**
+     * @param recurring the recurring to set
+     */
+    public void setRecurring(boolean recurring) {
+        this.recurring = recurring;
     }
 }
