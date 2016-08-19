@@ -5,7 +5,7 @@ fuzzy: true
 
 
 http:
-  port: 9090
+  port: 15400
   adminPort: 9091
   rootPath: /api/*
 
