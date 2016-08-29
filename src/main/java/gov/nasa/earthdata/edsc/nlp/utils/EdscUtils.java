@@ -30,6 +30,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 import javax.ws.rs.core.Response;
 import org.codehaus.jettison.json.JSONArray;
@@ -55,7 +56,7 @@ public class EdscUtils {
         return text;
     }
 
-    public static EdscSpatial spatialParsing(String text, List<ResolvedLocation> resolvedLocations, String geoNamesUrl) throws UnsupportedEncodingException, JSONException {
+    public static EdscSpatial spatialParsing(String text, List<ResolvedLocation> resolvedLocations, String geoNamesUrl) {
         /*
          * Spatial Extraction
          */
@@ -85,44 +86,49 @@ public class EdscUtils {
         if (!country.isEmpty()) {
             geoName += "," + country;
         }
-        logger.info("---- geoName: " + geoName);
 
         if (resolvedLocations.size() > 0) {
-            String uri = geoNamesUrl + URLEncoder.encode(geoName, "UTF-8");
-            logger.info("Seding request to geonames.org: " + uri);
-            ClientConfig clientConfig = new DefaultClientConfig();
-            clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
-            Client client = Client.create(clientConfig);
-            WebResource resource = client.resource(uri);
-            ClientResponse response = resource.accept("application/json").get(ClientResponse.class);
-
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                JSONObject json = new JSONObject(response.getEntity(String.class));
-                JSONArray geonamesResponse = json.getJSONArray("geonames");
-                for (int i = 0; i < geonamesResponse.length(); i++) {
-                    Iterator<String> keys = geonamesResponse.getJSONObject(i).keys();
-                    while (keys.hasNext()) {
-                        String key = keys.next();
-                        if (key.equals("bbox")) {
-                            JSONObject bbox = geonamesResponse.getJSONObject(i).optJSONObject(key);
-                            Point nePoint = new Point(bbox.getDouble("north"), bbox.getDouble("east"));
-                            Point swPoint = new Point(bbox.getDouble("south"), bbox.getDouble("west"));
-                            EdscSpatial spatial = new EdscSpatial();
-                            spatial.setBbox(new BoundingBox(swPoint, nePoint));
-                            spatial.setGeonames(geoName);
-                            spatial.setTextAfterExtraction(text);
-                            spatial.setQuery("bounding_box:" + swPoint.getLongitude() + "," + swPoint.getLatitude() + ":" + nePoint.getLongitude() + "," + nePoint.getLatitude());
-                            return spatial;
+            try {
+                String uri = geoNamesUrl + URLEncoder.encode(geoName, "UTF-8");
+                logger.debug("Seding request to geonames.org: " + uri);
+                ClientConfig clientConfig = new DefaultClientConfig();
+                clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+                Client client = Client.create(clientConfig);
+                WebResource resource = client.resource(uri);
+                ClientResponse response = resource.accept("application/json").get(ClientResponse.class);
+                
+                if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+                    JSONObject json = new JSONObject(response.getEntity(String.class));
+                    JSONArray geonamesResponse = json.getJSONArray("geonames");
+                    for (int i = 0; i < geonamesResponse.length(); i++) {
+                        Iterator<String> keys = geonamesResponse.getJSONObject(i).keys();
+                        while (keys.hasNext()) {
+                            String key = keys.next();
+                            if (key.equals("bbox")) {
+                                JSONObject bbox = geonamesResponse.getJSONObject(i).optJSONObject(key);
+                                Point nePoint = new Point(bbox.getDouble("north"), bbox.getDouble("east"));
+                                Point swPoint = new Point(bbox.getDouble("south"), bbox.getDouble("west"));
+                                EdscSpatial spatial = new EdscSpatial();
+                                spatial.setBbox(new BoundingBox(swPoint, nePoint));
+                                spatial.setGeonames(geoName);
+                                spatial.setTextAfterExtraction(text);
+                                spatial.setQuery("bounding_box:" + swPoint.getLongitude() + "," + swPoint.getLatitude() + ":" + nePoint.getLongitude() + "," + nePoint.getLatitude());
+                                logger.info("Spatial resolved: " + geoName);
+                                return spatial;
+                            }
                         }
                     }
+                } else {
+                    logger.error("Request '" + uri + "' returned status code: " + response.getStatus());
+                    return null;
                 }
-            } else {
-                logger.error("Request '" + uri + "' returned status code: " + response.getStatus());
+            } catch (UnsupportedEncodingException | JSONException ex) {
+                logger.error("Exception occured: " + ex.getLocalizedMessage(), ex);
                 return null;
             }
         }
 
-        logger.info("No resolved locations found from text: " + text);
+        logger.info("No spatial resolved.");
         return null;
     }
 
@@ -147,18 +153,9 @@ public class EdscUtils {
             SUTime.Temporal temporal = cm.get(TimeExpression.Annotation.class).getTemporal();
             Timex timex = cm.get(TimeAnnotations.TimexAnnotation.class);
             newTimex3 = Timex3.fromXml(timex.toString());
-            logger.info("-----------------------------------------------------------------");
-            logger.info("  temporal.getTimexValue(): " + temporal.getTimexValue());
-            logger.info("  temporal.getDuration(): " + temporal.getDuration());
-            logger.info("  temporal.getPeriod(): " + temporal.getPeriod());
-            logger.info("  timex.text(): " + timex.text());
-            logger.info("  timex.toString(): " + timex.toString());
-            logger.info("  timex.value(): " + timex.value());
-            logger.info("-----------------------------------------------------------------");
 
             range = mergeRanges(newTimex3, oldTimex3, range);
             oldTimex3 = newTimex3;
-            System.out.println("-----$$$#$@$@$@$ range: " + range);
             edscTemporal.setTemporal(edscTemporal.getTemporal() + ", " + temporal.toString());
             edscTemporal.setTimex(edscTemporal.getTimex() + ", " + temporal.getTimexValue());
             edscTemporal.setTextAfterExtraction(text.replaceAll("[^A-Za-z0-9]*$", ""));
@@ -170,13 +167,14 @@ public class EdscUtils {
                 edscTemporal.setEnd(range.getEnd() + "Z");
                 edscTemporal.setRecurring(range.getPeriodicity() != -1);
             } else {
+                logger.info("No temporal resolved.");
                 return null;
             }
         } catch (ParseException e) {
-            logger.error(e.getLocalizedMessage(), e);
+            logger.error("Exception occured: " + e.getLocalizedMessage(), e);
             edscTemporal.setQuery(null);
         }
-
+        logger.info("Temporal resolved: " + edscTemporal.getQuery());
         return edscTemporal;
     }
 
@@ -238,7 +236,6 @@ public class EdscUtils {
                 String[] oldDate = oldDatetime[0].split("-");
                 String[] oldTime = oldDatetime.length > 1 ? oldDatetime[1].split(":") : null;
 
-                logger.info("------- " + rangeDateTime + ", " + oldRangeDateTime);
                 // merge year
                 if (date[0].equals("XXXX")) {
                     if (oldDate[0].equals("XXXX")) {

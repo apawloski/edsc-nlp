@@ -12,6 +12,8 @@ import gov.nasa.earthdata.edsc.nlp.utils.EdscResponse;
 import gov.nasa.earthdata.edsc.nlp.utils.EdscUtils;
 import gov.nasa.earthdata.edsc.nlp.spatial.EdscSpatial;
 import gov.nasa.earthdata.edsc.nlp.temporal.EdscTemporal;
+import java.time.Duration;
+import java.time.Instant;
 import javax.ws.rs.QueryParam;
 
 import org.slf4j.Logger;
@@ -37,14 +39,17 @@ public class NLPResource {
     @Path("nlp")
     @Produces(MediaType.APPLICATION_JSON)
     public Response contextParsing(@QueryParam("text") String text) {
+        Instant start = Instant.now();
+        logger.info("Start to process text: '" + text + "'");
         /*
         * spatial extraction
          */
         EdscSpatial edscSpatial;
         try {
-            edscSpatial = EdscUtils.spatialParsing(text, parser.parse(text), geoNamesUrl);
+        edscSpatial = EdscUtils.spatialParsing(text, parser.parse(text), geoNamesUrl);
         } catch (Exception e) {
-            return Response.status(500).entity(e).build();
+            logger.error("Exception occurred: " + e.getLocalizedMessage(), e);
+            edscSpatial = null;
         }
 
         /*
@@ -63,7 +68,8 @@ public class NLPResource {
         } else {
             edscResponse.setKeyword(text);
         }
-
+        Instant end = Instant.now();
+        logger.info("Completed 200 OK in " + Duration.between(start, end).toMillis() + "ms.");
         return Response.status(200).entity(edscResponse).build();
     }
 
