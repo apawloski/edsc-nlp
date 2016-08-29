@@ -49,6 +49,7 @@ public class NLPRestConfiguration extends Configuration implements AssetsBundleC
         return maxContextWindow;
     }
 
+    @Override
     public AssetsConfiguration getAssetsConfiguration() {
         return assets;
     }

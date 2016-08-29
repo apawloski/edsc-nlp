@@ -60,7 +60,6 @@ public class EdscUtils {
         /*
          * Spatial Extraction
          */
-        ResolvedLocations result = new ResolvedLocations(resolvedLocations);
         String geoName = "";
         String delim = "";
         String country = "";

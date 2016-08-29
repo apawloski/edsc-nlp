@@ -1,12 +1,14 @@
-CLAVIN Rest
+Earthdata Search NLP (Natural Language Processor)
 ===========
+
+An opensource project based on CLAVIN and StanfordNLP to help Earthdata Search parse spatial and temporal fields out of plain text.
 
 ## Quick Start
 
 ### Clone the project
 
-    git clone git@github.com:mightynimble/clavin-rest.git
-    cd clavin-rest
+    git clone git@github.com:mightynimble/edsc-nlp.git
+    cd edsc-nlp
 
 ### Download StanfordNLP to libs directory
 
@@ -29,25 +31,19 @@ CLAVIN Rest
 
 ### Copy jar and config file to demo directory
 
-    cp target/clavin-rest-0.3.0-SNAPSHOT.jar ./demo/
-    cp clavin-rest.yml ./demo/
+    cp target/edsc-nlp-0.1.jar ./demo/
+    cp edsc-nlp.yml ./demo/
 
 ### Create a CLAVIN gazetteer
 
     cd demo
-    java -Xmx4096m -jar clavin-rest-0.3.0-SNAPSHOT.jar index clavin-rest.yml
+    java -Xmx4096m -jar edsc-nlp-0.1.jar index edsc-nlp.yml
 
-### Run the CLAVIN rest server
+### Run the rest server
 
-    java -Xmx2048m -jar clavin-rest-0.3.0-SNAPSHOT.jar server clavin-rest.yml
+    java -Xmx2048m -jar edsc-nlp-0.1.jar server edsc-nlp.yml
 
-### Geotag a string
+### Extract spatial and temporal fields from some string
 
-    curl -s --data "Norway is a small town in Maine" --header "Content-Type: text/plain" http://localhost:9090/api/v0/geotag
-
-### Temporal extraction
-    curl -s --data "Dump trash on Thursdays" --header "Content-Type: text/plain" http://localhost:9090/api/v0/temporal
-
-### Try in browser:
-
-    http://localhost:9090
+    curl -i http://localhost:15400/nlp?text=Norway%20is%20a%20small%20town%20in%20Maine
+    curl -i http://localhost:15400/nlp?text=Snow%20cover%20in%Boston%20last%20winter

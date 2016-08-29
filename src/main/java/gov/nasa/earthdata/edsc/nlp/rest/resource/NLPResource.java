@@ -17,6 +17,7 @@ import javax.ws.rs.QueryParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Path("/")
 @Produces(MediaType.APPLICATION_JSON)
 public class NLPResource {
 
@@ -31,7 +32,7 @@ public class NLPResource {
     }
 
     @GET
-    @Path("/nlp")
+    @Path("nlp")
     @Produces(MediaType.APPLICATION_JSON)
     public Response contextParsing(@QueryParam("text") String text) {
         /*

@@ -13,7 +13,6 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import com.yammer.dropwizard.Service;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Environment;
-import com.bazaarvoice.dropwizard.assets.ConfiguredAssetsBundle;
 import com.bericotech.clavin.GeoParser;
 import com.bericotech.clavin.nerd.StanfordExtractor;
 import gov.nasa.earthdata.edsc.nlp.rest.resource.NLPResource;
@@ -29,9 +28,7 @@ public class NLPRestService extends Service<NLPRestConfiguration> {
 
     @Override
     public void initialize(Bootstrap<NLPRestConfiguration> bootstrap) {
-        bootstrap.setName("clavin-rest");
-        //bootstrap.addBundle(new AssetsBundle("/assets/", "/"));
-        bootstrap.addBundle(new ConfiguredAssetsBundle("/assets/", "/"));
+        bootstrap.setName("edsc-nlp");
         bootstrap.addCommand(new IndexCommand());
     }
 
@@ -62,5 +59,4 @@ public class NLPRestService extends Service<NLPRestConfiguration> {
 
         environment.addResource(new NLPResource(parser, pipeline));
     }
-
 }

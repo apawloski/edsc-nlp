@@ -1,1 +1,1 @@
-web: java -jar target/clavin-rest-0.3.0-SNAPSHOT.jar server clavin-rest.yml
+web: java -jar target/edsc-nlp-0.1.jar server edsc-nlp.yml

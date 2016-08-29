@@ -7,8 +7,4 @@ fuzzy: true
 http:
   port: 15400
   adminPort: 9091
-  rootPath: /api/*
-
-assets:
-  overrides:
-    /: src/main/resources/assets/
+  rootPath: /*
