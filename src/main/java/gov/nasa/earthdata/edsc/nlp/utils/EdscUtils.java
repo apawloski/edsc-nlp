@@ -1,7 +1,6 @@
 package gov.nasa.earthdata.edsc.nlp.utils;
 
 import com.bericotech.clavin.resolver.ResolvedLocation;
-import gov.nasa.earthdata.edsc.nlp.rest.core.ResolvedLocations;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -56,7 +55,7 @@ public class EdscUtils {
         return text;
     }
 
-    public static EdscSpatial spatialParsing(String text, List<ResolvedLocation> resolvedLocations) throws UnsupportedEncodingException, JSONException {
+    public static EdscSpatial spatialParsing(String text, List<ResolvedLocation> resolvedLocations, String geoNamesUrl) throws UnsupportedEncodingException, JSONException {
         /*
          * Spatial Extraction
          */
@@ -89,7 +88,7 @@ public class EdscUtils {
         logger.info("---- geoName: " + geoName);
 
         if (resolvedLocations.size() > 0) {
-            String uri = "http://api.geonames.org/search?username=edsc&type=json&maxRows=1&isNameRequired=true&style=full&q=" + URLEncoder.encode(geoName, "UTF-8");
+            String uri = geoNamesUrl + URLEncoder.encode(geoName, "UTF-8");
             logger.info("Seding request to geonames.org: " + uri);
             ClientConfig clientConfig = new DefaultClientConfig();
             clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);

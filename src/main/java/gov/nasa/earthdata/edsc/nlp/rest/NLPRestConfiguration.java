@@ -27,7 +27,23 @@ public class NLPRestConfiguration extends Configuration implements AssetsBundleC
     @NotNull
     @JsonProperty
     private Boolean fuzzy;
+    
+    @NotNull
+    @JsonProperty
+    private Boolean suTimeIncludeRange;
+    
+    @NotNull
+    @JsonProperty
+    private Boolean suTimeMarkTimeRanges;
 
+    @NotNull
+    @JsonProperty
+    private String geoNamesUrl;
+    
+    @NotNull
+    @JsonProperty
+    private String geoNamesUserId;
+    
     @Valid
     @NotNull
     @JsonProperty
@@ -47,6 +63,22 @@ public class NLPRestConfiguration extends Configuration implements AssetsBundleC
 
     public Integer getMaxContextWindow() {
         return maxContextWindow;
+    }
+    
+    public Boolean getSuTimeIncludeRange() {
+        return suTimeIncludeRange;
+    }
+    
+    public Boolean getSuTimeMarkTimeRanges() {
+        return suTimeMarkTimeRanges;
+    }
+    
+    public String getGeoNamesUrl() {
+        return geoNamesUrl;
+    }
+    
+    public String getGeoNamesUserId() {
+        return geoNamesUserId;
     }
 
     @Override

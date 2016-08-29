@@ -2,6 +2,11 @@ luceneDir: IndexDirectory
 maxHitDepth: 5
 maxContextWindow: 10
 fuzzy: true
+suTimeIncludeRange: true
+suTimeMarkTimeRanges: true
+geoNamesUrl: http://api.geonames.org/search
+geoNamesUserId: edsc
+
 
 
 http:

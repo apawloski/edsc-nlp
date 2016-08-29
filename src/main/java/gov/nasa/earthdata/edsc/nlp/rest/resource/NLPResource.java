@@ -25,10 +25,12 @@ public class NLPResource {
 
     private final GeoParser parser;
     private final AnnotationPipeline pipeline;
+    private final String geoNamesUrl;
 
-    public NLPResource(GeoParser parser, AnnotationPipeline pipeline) {
+    public NLPResource(GeoParser parser, AnnotationPipeline pipeline, String geoNamesUrl) {
         this.parser = parser;
         this.pipeline = pipeline;
+        this.geoNamesUrl = geoNamesUrl;
     }
 
     @GET
@@ -40,7 +42,7 @@ public class NLPResource {
          */
         EdscSpatial edscSpatial;
         try {
-            edscSpatial = EdscUtils.spatialParsing(text, parser.parse(text));
+            edscSpatial = EdscUtils.spatialParsing(text, parser.parse(text), geoNamesUrl);
         } catch (Exception e) {
             return Response.status(500).entity(e).build();
         }
