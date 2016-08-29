@@ -1,16 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package gov.nasa.earthdata.edsc.temporal;
+package gov.nasa.earthdata.edsc.nlp.temporal;
 
 import java.io.Serializable;
 
-/**
- *
- * @author bsun
- */
 public class Pair<T1, T2> implements Comparable<Pair<T1, T2>>, Serializable {
 
     private T1 first;

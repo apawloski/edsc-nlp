@@ -1,17 +1,13 @@
-package gov.nasa.earthdata.edsc.spatial;
+package gov.nasa.earthdata.edsc.nlp.spatial;
 
-/**
- *
- * @author bsun
- */
-public class EdscPoint {
+public class Point {
     private double latitude;
     private double longitude;
 
-    public EdscPoint() {    
+    public Point() {    
     }
     
-    public EdscPoint(double lat, double lon) {
+    public Point(double lat, double lon) {
         this.latitude = lat;
         this.longitude = lon;
     }

@@ -1,16 +1,11 @@
-package gov.nasa.earthdata.edsc.temporal;
+package gov.nasa.earthdata.edsc.nlp.temporal;
 
-import gov.nasa.earthdata.edsc.EdscUtils;
-import gov.nasa.earthdata.edsc.XmlUtils;
+import gov.nasa.earthdata.edsc.nlp.utils.XmlUtils;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.regex.Pattern;
 import org.w3c.dom.Element;
 
-/**
- *
- * @author bsun
- */
 public class Timex3 {
 
     private String val;
@@ -153,7 +148,7 @@ public class Timex3 {
     public void setTid(String tid) {
         this.tid = tid;
     }
-    
+
     private void init(Element element) {
         init(XmlUtils.nodeToString(element, false), element);
     }
@@ -173,10 +168,10 @@ public class Timex3 {
         }
 
         // Optional attributes
-        String beginPoint = XmlUtils.getAttribute(element, "beginPoint");
-        this.beginPoint = (beginPoint == null || beginPoint.length() == 0) ? -1 : Integer.parseInt(beginPoint.substring(1));
-        String endPoint = XmlUtils.getAttribute(element, "endPoint");
-        this.endPoint = (endPoint == null || endPoint.length() == 0) ? -1 : Integer.parseInt(endPoint.substring(1));
+        String begin = XmlUtils.getAttribute(element, "beginPoint");
+        this.beginPoint = (begin == null || begin.length() == 0) ? -1 : Integer.parseInt(begin.substring(1));
+        String end = XmlUtils.getAttribute(element, "endPoint");
+        this.endPoint = (end == null || end.length() == 0) ? -1 : Integer.parseInt(end.substring(1));
 
         // Optional range
         String rangeStr = XmlUtils.getAttribute(element, "range");

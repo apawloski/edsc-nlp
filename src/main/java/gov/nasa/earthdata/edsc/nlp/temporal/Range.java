@@ -1,12 +1,8 @@
-package gov.nasa.earthdata.edsc.temporal;
+package gov.nasa.earthdata.edsc.nlp.temporal;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-/**
- *
- * @author bsun
- */
 public class Range {
 
     private String begin;

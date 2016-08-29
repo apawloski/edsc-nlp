@@ -1,4 +1,4 @@
-package com.bericotech.clavin.rest;
+package gov.nasa.earthdata.edsc.nlp.rest;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.util.Properties;
 import com.bericotech.clavin.ClavinException;
 import com.bericotech.clavin.gazetteer.query.Gazetteer;
 import com.bericotech.clavin.gazetteer.query.LuceneGazetteer;
-import com.bericotech.clavin.rest.command.IndexCommand;
+import gov.nasa.earthdata.edsc.nlp.rest.command.IndexCommand;
 import org.apache.lucene.queryparser.classic.ParseException;
 
 import com.yammer.dropwizard.Service;
@@ -16,19 +16,19 @@ import com.yammer.dropwizard.config.Environment;
 import com.bazaarvoice.dropwizard.assets.ConfiguredAssetsBundle;
 import com.bericotech.clavin.GeoParser;
 import com.bericotech.clavin.nerd.StanfordExtractor;
-import com.bericotech.clavin.rest.resource.ClavinRestResource;
+import gov.nasa.earthdata.edsc.nlp.rest.resource.NLPResource;
 
 import edu.stanford.nlp.pipeline.*;
 import edu.stanford.nlp.time.*;
 
-public class ClavinRestService extends Service<ClavinRestConfiguration> {
+public class NLPRestService extends Service<NLPRestConfiguration> {
 
     public static void main(String[] args) throws Exception {
-        new ClavinRestService().run(args);
+        new NLPRestService().run(args);
     }
 
     @Override
-    public void initialize(Bootstrap<ClavinRestConfiguration> bootstrap) {
+    public void initialize(Bootstrap<NLPRestConfiguration> bootstrap) {
         bootstrap.setName("clavin-rest");
         //bootstrap.addBundle(new AssetsBundle("/assets/", "/"));
         bootstrap.addBundle(new ConfiguredAssetsBundle("/assets/", "/"));
@@ -36,7 +36,7 @@ public class ClavinRestService extends Service<ClavinRestConfiguration> {
     }
 
     @Override
-    public void run(ClavinRestConfiguration configuration,
+    public void run(NLPRestConfiguration configuration,
             Environment environment) throws ClassCastException, ClassNotFoundException, IOException, ParseException, ClavinException {
         final String luceneDir = configuration.getLuceneDir();
         final Integer maxHitDepth = configuration.getMaxHitDepth();
@@ -53,14 +53,14 @@ public class ClavinRestService extends Service<ClavinRestConfiguration> {
         props.setProperty("sutime.includeRange", "true");
 //        props.setProperty("sutime.includeNested", "true");
         props.setProperty("sutime.markTimeRanges", "true");
-        
+
         AnnotationPipeline pipeline = new AnnotationPipeline();
         pipeline.addAnnotator(new TokenizerAnnotator(false));
         pipeline.addAnnotator(new WordsToSentencesAnnotator(false));
         pipeline.addAnnotator(new POSTaggerAnnotator(false));
         pipeline.addAnnotator(new TimeAnnotator("sutime", props));
 
-        environment.addResource(new ClavinRestResource(parser, pipeline));
+        environment.addResource(new NLPResource(parser, pipeline));
     }
 
 }

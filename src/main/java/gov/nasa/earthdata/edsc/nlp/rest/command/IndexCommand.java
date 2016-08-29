@@ -1,14 +1,14 @@
-package com.bericotech.clavin.rest.command;
+package gov.nasa.earthdata.edsc.nlp.rest.command;
 
 import com.bericotech.clavin.index.IndexDirectoryBuilder;
-import com.bericotech.clavin.rest.ClavinRestConfiguration;
+import gov.nasa.earthdata.edsc.nlp.rest.NLPRestConfiguration;
 import com.yammer.dropwizard.cli.ConfiguredCommand;
 import com.yammer.dropwizard.config.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 
 
-public class IndexCommand extends ConfiguredCommand<ClavinRestConfiguration> {
+public class IndexCommand extends ConfiguredCommand<NLPRestConfiguration> {
 
 
     public IndexCommand() {
@@ -17,9 +17,9 @@ public class IndexCommand extends ConfiguredCommand<ClavinRestConfiguration> {
 
 
     @Override
-    protected void run(Bootstrap<ClavinRestConfiguration> bootstrap,
+    protected void run(Bootstrap<NLPRestConfiguration> bootstrap,
                        Namespace namespace,
-                       ClavinRestConfiguration configuration) throws Exception {
+                       NLPRestConfiguration configuration) throws Exception {
 
         // send empty arguments for now
         String[] args = new String[1];

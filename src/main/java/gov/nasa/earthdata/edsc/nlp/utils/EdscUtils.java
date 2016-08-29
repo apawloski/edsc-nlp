@@ -1,17 +1,14 @@
-package gov.nasa.earthdata.edsc;
+package gov.nasa.earthdata.edsc.nlp.utils;
 
 import com.bericotech.clavin.resolver.ResolvedLocation;
-import com.bericotech.clavin.rest.core.ResolvedLocations;
-import com.bericotech.clavin.rest.resource.ClavinRestResource;
+import gov.nasa.earthdata.edsc.nlp.rest.core.ResolvedLocations;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
-import edu.stanford.nlp.io.StringOutputStream;
 import edu.stanford.nlp.ling.CoreAnnotations;
-import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.AnnotationPipeline;
 import edu.stanford.nlp.time.SUTime;
@@ -19,14 +16,13 @@ import edu.stanford.nlp.time.Timex;
 import edu.stanford.nlp.time.TimeAnnotations;
 import edu.stanford.nlp.time.TimeExpression;
 import edu.stanford.nlp.util.CoreMap;
-import gov.nasa.earthdata.edsc.EdscPrepositions.Prepositions;
-import gov.nasa.earthdata.edsc.spatial.EdscBoundingBox;
-import gov.nasa.earthdata.edsc.spatial.EdscPoint;
-import gov.nasa.earthdata.edsc.spatial.EdscSpatial;
-import gov.nasa.earthdata.edsc.temporal.EdscTemporal;
-import gov.nasa.earthdata.edsc.temporal.Timex3;
-import gov.nasa.earthdata.edsc.temporal.Range;
-import java.io.ByteArrayInputStream;
+import gov.nasa.earthdata.edsc.nlp.utils.EdscPrepositions.Prepositions;
+import gov.nasa.earthdata.edsc.nlp.spatial.BoundingBox;
+import gov.nasa.earthdata.edsc.nlp.spatial.Point;
+import gov.nasa.earthdata.edsc.nlp.spatial.EdscSpatial;
+import gov.nasa.earthdata.edsc.nlp.temporal.EdscTemporal;
+import gov.nasa.earthdata.edsc.nlp.temporal.Timex3;
+import gov.nasa.earthdata.edsc.nlp.temporal.Range;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
@@ -35,21 +31,13 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Pattern;
 import javax.ws.rs.core.Response;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 /**
  *
@@ -119,10 +107,10 @@ public class EdscUtils {
                         String key = keys.next();
                         if (key.equals("bbox")) {
                             JSONObject bbox = geonamesResponse.getJSONObject(i).optJSONObject(key);
-                            EdscPoint nePoint = new EdscPoint(bbox.getDouble("north"), bbox.getDouble("east"));
-                            EdscPoint swPoint = new EdscPoint(bbox.getDouble("south"), bbox.getDouble("west"));
+                            Point nePoint = new Point(bbox.getDouble("north"), bbox.getDouble("east"));
+                            Point swPoint = new Point(bbox.getDouble("south"), bbox.getDouble("west"));
                             EdscSpatial spatial = new EdscSpatial();
-                            spatial.setBbox(new EdscBoundingBox(swPoint, nePoint));
+                            spatial.setBbox(new BoundingBox(swPoint, nePoint));
                             spatial.setGeonames(geoName);
                             spatial.setTextAfterExtraction(text);
                             spatial.setQuery("bounding_box:" + swPoint.getLongitude() + "," + swPoint.getLatitude() + ":" + nePoint.getLongitude() + "," + nePoint.getLatitude());
@@ -183,8 +171,7 @@ public class EdscUtils {
                 edscTemporal.setStart(range.getBegin() + "Z");
                 edscTemporal.setEnd(range.getEnd() + "Z");
                 edscTemporal.setRecurring(range.getPeriodicity() != -1);
-            }
-            else {
+            } else {
                 return null;
             }
         } catch (ParseException e) {
@@ -200,8 +187,8 @@ public class EdscUtils {
             return null;
         }
         // only apply annual recurring
-        int beginDayOfYear = -1;
-        int endDayOfYear = -1;
+        int beginDayOfYear;
+        int endDayOfYear;
         if (range.getPeriodicity() != -1) {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
             Calendar beginCal = Calendar.getInstance();

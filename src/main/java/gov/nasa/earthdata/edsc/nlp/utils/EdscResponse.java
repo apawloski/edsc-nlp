@@ -1,13 +1,10 @@
-package gov.nasa.earthdata.edsc;
+package gov.nasa.earthdata.edsc.nlp.utils;
 
-import gov.nasa.earthdata.edsc.spatial.EdscSpatial;
-import gov.nasa.earthdata.edsc.temporal.EdscTemporal;
+import gov.nasa.earthdata.edsc.nlp.spatial.EdscSpatial;
+import gov.nasa.earthdata.edsc.nlp.temporal.EdscTemporal;
 
-/**
- *
- * @author bsun
- */
 public class EdscResponse {
+
     private EdscSpatial edscSpatial;
     private EdscTemporal edscTemporal;
     private String keyword;
@@ -53,5 +50,5 @@ public class EdscResponse {
     public void setKeyword(String keyword) {
         this.keyword = keyword;
     }
-   
+
 }

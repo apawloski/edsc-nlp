@@ -1,10 +1,7 @@
-package gov.nasa.earthdata.edsc.temporal;
+package gov.nasa.earthdata.edsc.nlp.temporal;
 
-/**
- *
- * @author bsun
- */
 public class EdscTemporal {
+
     private String textAfterExtraction;
     private String temporal;
     private String timex;
@@ -40,7 +37,7 @@ public class EdscTemporal {
     public void setTimex(String timex) {
         this.timex = timex;
     }
-    
+
     /**
      * @return the textAfterExtraction
      */

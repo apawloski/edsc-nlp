@@ -1,19 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+package gov.nasa.earthdata.edsc.nlp.spatial;
 
-package gov.nasa.earthdata.edsc.spatial;
-
-/**
- *
- * @author bsun
- */
 public class EdscSpatial {
+
     private String textAfterExtraction;
     private String geonames;
-    private EdscBoundingBox bbox;
+    private BoundingBox bbox;
     private String query;
 
     /**
@@ -33,14 +24,14 @@ public class EdscSpatial {
     /**
      * @return the bbox
      */
-    public EdscBoundingBox getBbox() {
+    public BoundingBox getBbox() {
         return bbox;
     }
 
     /**
      * @param bbox the bbox to set
      */
-    public void setBbox(EdscBoundingBox bbox) {
+    public void setBbox(BoundingBox bbox) {
         this.bbox = bbox;
     }
 

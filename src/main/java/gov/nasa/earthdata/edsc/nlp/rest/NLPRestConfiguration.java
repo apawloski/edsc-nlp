@@ -1,4 +1,4 @@
-package com.bericotech.clavin.rest;
+package gov.nasa.earthdata.edsc.nlp.rest;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -10,47 +10,47 @@ import com.bazaarvoice.dropwizard.assets.AssetsConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yammer.dropwizard.config.Configuration;
 
-public class ClavinRestConfiguration extends Configuration implements AssetsBundleConfiguration{
+public class NLPRestConfiguration extends Configuration implements AssetsBundleConfiguration {
 
-	@NotEmpty
+    @NotEmpty
     @JsonProperty
     private String luceneDir;
-    
+
     @NotNull
     @JsonProperty
     private Integer maxHitDepth;
-    
+
     @NotNull
     @JsonProperty
-    private Integer maxContextWindow; 
-    
+    private Integer maxContextWindow;
+
     @NotNull
     @JsonProperty
-    private Boolean fuzzy; 
-    
+    private Boolean fuzzy;
+
     @Valid
     @NotNull
     @JsonProperty
     private final AssetsConfiguration assets = new AssetsConfiguration();
-    
+
     public String getLuceneDir() {
         return luceneDir;
     }
-    
+
     public Integer getMaxHitDepth() {
         return maxHitDepth;
     }
-    
+
     public Boolean getFuzzy() {
-    	return fuzzy;
-    }
-    
-    public Integer getMaxContextWindow() {
-    	return maxContextWindow;
+        return fuzzy;
     }
 
-	public AssetsConfiguration getAssetsConfiguration() {
-		return assets;
-	}
-    
+    public Integer getMaxContextWindow() {
+        return maxContextWindow;
+    }
+
+    public AssetsConfiguration getAssetsConfiguration() {
+        return assets;
+    }
+
 }

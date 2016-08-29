@@ -1,9 +1,5 @@
-package gov.nasa.earthdata.edsc;
+package gov.nasa.earthdata.edsc.nlp.utils;
 
-/**
- *
- * @author bsun
- */
 public class EdscPrepositions {
 
     public enum Prepositions {
@@ -18,11 +14,11 @@ public class EdscPrepositions {
         private Prepositions(String value) {
             this.value = value;
         }
-        
+
         public String value() {
             return this.value;
         }
-        
+
         private final static Prepositions[] values = Prepositions.values();
     }
 }

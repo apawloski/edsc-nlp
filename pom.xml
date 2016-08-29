@@ -2,10 +2,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.bericotech</groupId>
-  <artifactId>clavin-rest</artifactId>
+  <artifactId>edsc-nlp</artifactId>
   <version>0.3.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-  <name>clavin-rest</name>
+  <name>edsc-nlp</name>
   <url>http://maven.apache.org</url>
 
   <properties>
