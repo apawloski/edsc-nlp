@@ -47,7 +47,7 @@ public class EdscUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(EdscUtils.class);
 
-    private static final int softCutoffYear = 99999;
+    private static final int SOFT_CUTOFF_YEAR = 99999;
 
     private static String removeTrailingPreposition(String text) {
         for (Prepositions prep : Prepositions.values()) {
@@ -142,7 +142,6 @@ public class EdscUtils {
         pipeline.annotate(annotation);
         List<CoreMap> timexAnnsAll = annotation.get(TimeAnnotations.TimexAnnotations.class);
 
-        String out = "";
         EdscTemporal edscTemporal = new EdscTemporal();
         Range range = new Range();
         Timex3 newTimex3;
@@ -161,7 +160,7 @@ public class EdscUtils {
             edscTemporal.setTextAfterExtraction(text.replaceAll("[^A-Za-z0-9]*$", ""));
         }
         try {
-            if (timexAnnsAll.size() > 0) {
+            if (timexAnnsAll.size() > 0 && range != null) {
                 edscTemporal.setQuery(getEdscQuery(range));
                 edscTemporal.setStart(range.getBegin() + "Z");
                 edscTemporal.setEnd(range.getEnd() + "Z");
@@ -261,9 +260,9 @@ public class EdscUtils {
                 } else {
                     int tmp1 = Integer.parseInt(date[1]);
                     int tmp2 = Integer.parseInt(oldDate[1]);
-                    if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > softCutoffYear) {
+                    if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > SOFT_CUTOFF_YEAR) {
                         month = tmp2;
-                    } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > softCutoffYear) {
+                    } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > SOFT_CUTOFF_YEAR) {
                         month = tmp1;
                     } else {
                         month = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
@@ -280,14 +279,14 @@ public class EdscUtils {
                         dayOfMonth = tmpCal.getActualMaximum(Calendar.DAY_OF_MONTH);
                     }
                 } else if (date.length < 3 && oldDate.length >= 3) {
-                    if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > softCutoffYear) {
+                    if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > SOFT_CUTOFF_YEAR) {
                         Calendar tmpCal = new GregorianCalendar(year, month - 1, 1);
                         dayOfMonth = tmpCal.getActualMaximum(Calendar.DAY_OF_MONTH);
                     } else {
                         dayOfMonth = Integer.parseInt(oldDate[2]);
                     }
                 } else if (date.length >= 3 && oldDate.length < 3) {
-                    if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > softCutoffYear) {
+                    if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > SOFT_CUTOFF_YEAR) {
                         Calendar tmpCal = new GregorianCalendar(year, month - 1, 1);
                         dayOfMonth = tmpCal.getActualMaximum(Calendar.DAY_OF_MONTH);
                     } else {
@@ -300,9 +299,9 @@ public class EdscUtils {
                 } else {
                     int tmp1 = Integer.parseInt(date[2]);
                     int tmp2 = Integer.parseInt(oldDate[2]);
-                    if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > softCutoffYear) {
+                    if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > SOFT_CUTOFF_YEAR) {
                         dayOfMonth = tmp2;
-                    } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > softCutoffYear) {
+                    } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > SOFT_CUTOFF_YEAR) {
                         dayOfMonth = tmp1;
                     } else {
                         dayOfMonth = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
@@ -318,9 +317,9 @@ public class EdscUtils {
                     } else {
                         int tmp1 = Integer.parseInt(time[0]);
                         int tmp2 = Integer.parseInt(oldTime[0]);
-                        if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > softCutoffYear) {
+                        if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > SOFT_CUTOFF_YEAR) {
                             hour = tmp2;
-                        } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > softCutoffYear) {
+                        } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > SOFT_CUTOFF_YEAR) {
                             hour = tmp1;
                         } else {
                             hour = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
@@ -328,9 +327,9 @@ public class EdscUtils {
 
                         tmp1 = Integer.parseInt(time[1]);
                         tmp2 = Integer.parseInt(oldTime[1]);
-                        if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > softCutoffYear) {
+                        if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > SOFT_CUTOFF_YEAR) {
                             minute = tmp2;
-                        } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > softCutoffYear) {
+                        } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > SOFT_CUTOFF_YEAR) {
                             minute = tmp1;
                         } else {
                             minute = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
@@ -347,9 +346,9 @@ public class EdscUtils {
                         } else {
                             tmp1 = Integer.parseInt(time[2]);
                             tmp2 = Integer.parseInt(oldTime[2]);
-                            if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > softCutoffYear) {
+                            if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > SOFT_CUTOFF_YEAR) {
                                 second = tmp2;
-                            } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > softCutoffYear) {
+                            } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > SOFT_CUTOFF_YEAR) {
                                 second = tmp1;
                             } else {
                                 second = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);

@@ -15,6 +15,7 @@ import gov.nasa.earthdata.edsc.nlp.temporal.EdscTemporal;
 import java.time.Duration;
 import java.time.Instant;
 import javax.ws.rs.QueryParam;
+import org.apache.commons.lang3.text.WordUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,9 @@ public class NLPResource {
          */
         EdscSpatial edscSpatial;
         try {
-        edscSpatial = EdscUtils.spatialParsing(text, parser.parse(text), geoNamesUrl);
+            // CLAVIN can't recognize place names in all lowercase. We need to capitalize the text string
+            text = WordUtils.capitalizeFully(text);
+            edscSpatial = EdscUtils.spatialParsing(text, parser.parse(text), geoNamesUrl);
         } catch (Exception e) {
             logger.error("Exception occurred: " + e.getLocalizedMessage(), e);
             edscSpatial = null;
