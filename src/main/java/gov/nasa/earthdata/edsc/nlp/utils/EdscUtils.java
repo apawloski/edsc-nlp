@@ -184,7 +184,7 @@ public class EdscUtils {
         // only apply annual recurring
         int beginDayOfYear;
         int endDayOfYear;
-        if (range.getPeriodicity() != -1) {
+        if (range.getPeriodicity() > -1) {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
             Calendar beginCal = Calendar.getInstance();
             beginCal.setTime(formatter.parse(range.getBegin()));
@@ -192,7 +192,11 @@ public class EdscUtils {
             endCal.setTime(formatter.parse(range.getEnd()));
             beginDayOfYear = beginCal.get(Calendar.DAY_OF_YEAR);
             endDayOfYear = endCal.get(Calendar.DAY_OF_YEAR);
-            return range.getBegin() + "Z" + "," + range.getEnd() + "Z," + beginDayOfYear + "," + endDayOfYear;
+            if (beginDayOfYear == endDayOfYear) {
+                return range.getBegin() + "Z" + "," + range.getEnd() + "Z";
+            } else {
+                return range.getBegin() + "Z" + "," + range.getEnd() + "Z," + beginDayOfYear + "," + endDayOfYear;
+            }
         }
         return range.getBegin() + "Z" + "," + range.getEnd() + "Z";
     }
@@ -236,15 +240,11 @@ public class EdscUtils {
                 String[] oldTime = oldDatetime.length > 1 ? oldDatetime[1].split(":") : null;
 
                 // merge year
-                if (date[0].equals("XXXX")) {
-                    if (oldDate[0].equals("XXXX")) {
-                        year = isBegin
-                                ? Calendar.getInstance().getActualMinimum(Calendar.YEAR)
-                                : Calendar.getInstance().getActualMaximum(Calendar.YEAR);
-                    } else {
-                        year = Integer.parseInt(oldDate[0]);
-                    }
-                } else if (oldDate[0].equals("XXXX")) {
+                if (date[0].equals("XXXX") && oldDate[0].equals("XXXX")) {
+                    year = isBegin ? 1 : SOFT_CUTOFF_YEAR;
+                } else if (date[0].equals("XXXX") && !oldDate[0].equals("XXXX")) {
+                    year = Integer.parseInt(oldDate[0]);
+                } else if (!date[0].equals("XXXX") && oldDate[0].equals("XXXX")) {
                     year = Integer.parseInt(date[0]);
                 } else {
                     int tmp1 = Integer.parseInt(date[0]);
@@ -253,19 +253,25 @@ public class EdscUtils {
                 }
 
                 // merge month
-                if (date[1].equals("XX")) {
-                    month = oldDate[1].equals("XX") ? 1 : Integer.parseInt(oldDate[1]);
-                } else if (oldDate[1].equals("XX")) {
+                if (date[1].equals("XX") && oldDate[1].equals("XX")) {
+                    month = 1;
+                } else if (date[1].equals("XX") && !oldDate[1].equals("XX")) {
+                    month = Integer.parseInt(oldDate[1]);
+                } else if (!date[1].equals("XX") && oldDate[1].equals("XX")) {
                     month = Integer.parseInt(date[1]);
                 } else {
-                    int tmp1 = Integer.parseInt(date[1]);
-                    int tmp2 = Integer.parseInt(oldDate[1]);
-                    if (isBegin && Integer.parseInt(date[0]) == 1 || !isBegin && Integer.parseInt(date[0]) > SOFT_CUTOFF_YEAR) {
-                        month = tmp2;
-                    } else if (isBegin && Integer.parseInt(oldDate[0]) == 1 || !isBegin && Integer.parseInt(oldDate[0]) > SOFT_CUTOFF_YEAR) {
-                        month = tmp1;
+                    int newMonth = Integer.parseInt(date[1]);
+                    int oldMonth = Integer.parseInt(oldDate[1]);
+                    int newYear = Integer.parseInt(date[0]);
+                    int oldYear = Integer.parseInt(oldDate[0]);
+                    if ((newYear <= 1 || newYear >= SOFT_CUTOFF_YEAR) && (oldYear <= 1 || oldYear >= SOFT_CUTOFF_YEAR)) {
+                        month = isBegin ? Math.max(newMonth, oldMonth) : Math.min(newMonth, oldMonth);
+                    } else if (newYear > 1 && newYear < SOFT_CUTOFF_YEAR && (oldYear <= 1 || oldYear >= SOFT_CUTOFF_YEAR)) {
+                        month = newMonth;
+                    } else if ((newYear <= 1 || newYear >= SOFT_CUTOFF_YEAR) && oldYear > 1 && oldYear < SOFT_CUTOFF_YEAR) {
+                        month = oldMonth;
                     } else {
-                        month = isBegin ? Math.max(tmp1, tmp2) : Math.min(tmp1, tmp2);
+                        month = isBegin ? Math.max(newMonth, oldMonth) : Math.min(newMonth, oldMonth);
                     }
                 }
 
@@ -360,7 +366,9 @@ public class EdscUtils {
                     minute = Integer.parseInt(oldTime[1]);
                     second = Integer.parseInt(oldTime[2]);
                 } else {
-                    hour = minute = second = 0;
+                    hour = isBegin ? 0 : 23;
+                    minute = isBegin ? 0 : 59;
+                    second = isBegin ? 0 : 59;
                 }
 
                 return makeCalendar(year, month, dayOfMonth, hour, minute, second);
