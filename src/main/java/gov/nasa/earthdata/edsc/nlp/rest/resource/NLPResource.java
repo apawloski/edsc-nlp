@@ -35,6 +35,12 @@ public class NLPResource {
         this.pipeline = pipeline;
         this.geoNamesUrl = geoNamesUrl;
     }
+    
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response sanityCheck() {
+        return Response.status(200).entity("OK").build();
+    }
 
     @GET
     @Path("nlp")
