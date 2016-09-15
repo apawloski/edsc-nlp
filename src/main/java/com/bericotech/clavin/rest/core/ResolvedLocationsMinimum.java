@@ -1,4 +1,4 @@
-package gov.nasa.earthdata.edsc.nlp.rest.core;
+package com.bericotech.clavin.rest.core;
 
 import java.util.ArrayList;
 import java.util.List;

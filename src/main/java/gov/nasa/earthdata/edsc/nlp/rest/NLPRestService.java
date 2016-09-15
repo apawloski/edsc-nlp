@@ -7,7 +7,7 @@ import java.util.Properties;
 import com.bericotech.clavin.ClavinException;
 import com.bericotech.clavin.gazetteer.query.Gazetteer;
 import com.bericotech.clavin.gazetteer.query.LuceneGazetteer;
-import gov.nasa.earthdata.edsc.nlp.rest.command.IndexCommand;
+import com.bericotech.clavin.rest.commend.IndexCommand;
 import org.apache.lucene.queryparser.classic.ParseException;
 
 import com.yammer.dropwizard.Service;

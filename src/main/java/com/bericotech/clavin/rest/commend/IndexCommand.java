@@ -1,4 +1,4 @@
-package gov.nasa.earthdata.edsc.nlp.rest.command;
+package com.bericotech.clavin.rest.commend;
 
 import com.bericotech.clavin.index.IndexDirectoryBuilder;
 import gov.nasa.earthdata.edsc.nlp.rest.NLPRestConfiguration;
